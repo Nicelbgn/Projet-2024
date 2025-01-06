@@ -1,3 +1,8 @@
+/**
+ * Composant bouton personnalisé
+ * Supporte différentes variantes : primary, secondary, danger
+ */
+
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 
@@ -5,9 +10,16 @@ interface ButtonProps {
   onPress: () => void;
   title: string;
   variant?: 'primary' | 'secondary' | 'danger';
+  disabled?: boolean;  // Ajout de la prop disabled
 }
 
-export const Button = ({ onPress, title, variant = 'primary' }: ButtonProps) => {
+export const Button = ({ 
+  onPress, 
+  title, 
+  variant = 'primary',
+  disabled = false 
+}: ButtonProps) => {
+  // Sélection du style en fonction de la variante
   const buttonStyle = {
     primary: styles.primaryButton,
     secondary: styles.secondaryButton,
@@ -15,8 +27,21 @@ export const Button = ({ onPress, title, variant = 'primary' }: ButtonProps) => 
   }[variant];
 
   return (
-    <TouchableOpacity style={[styles.button, buttonStyle]} onPress={onPress}>
-      <Text style={styles.buttonText}>{title}</Text>
+    <TouchableOpacity 
+      style={[
+        styles.button, 
+        buttonStyle,
+        disabled && styles.disabledButton
+      ]} 
+      onPress={onPress}
+      disabled={disabled}
+    >
+      <Text style={[
+        styles.buttonText,
+        disabled && styles.disabledText
+      ]}>
+        {title}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -37,9 +62,16 @@ const styles = StyleSheet.create({
   dangerButton: {
     backgroundColor: '#FF3B30',
   },
+  disabledButton: {
+    backgroundColor: '#999',
+    opacity: 0.5,
+  },
   buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  disabledText: {
+    color: '#666',
   },
 });

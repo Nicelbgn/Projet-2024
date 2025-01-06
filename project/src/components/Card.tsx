@@ -1,3 +1,9 @@
+/**
+ * Composant Card générique
+ * Fournit un conteneur stylisé avec ombre et coins arrondis
+ * Utilisé comme base pour afficher du contenu encadré
+ */
+
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 

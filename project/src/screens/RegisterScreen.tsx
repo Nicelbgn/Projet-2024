@@ -1,9 +1,17 @@
+/**
+ * Écran d'inscription
+ * Permet la création de nouveaux comptes utilisateur
+ * Gère les deux types de comptes : utilisateur et club
+ */
+
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import { Input } from '../components/Input';
 import { Picker } from '@react-native-picker/picker';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export const RegisterScreen = () => {
   const [fullName, setFullName] = useState('');
@@ -11,10 +19,11 @@ export const RegisterScreen = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('user');
+  const [error, setError] = useState('');
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
-      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
+      setError('Les mots de passe ne correspondent pas');
       return;
     }
 
@@ -28,94 +37,158 @@ export const RegisterScreen = () => {
         createdAt: new Date(),
       });
     } catch (error) {
-      Alert.alert('Erreur', 'Erreur lors de l\'inscription');
+      setError('Erreur lors de l\'inscription');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Inscription</Text>
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Nom complet"
-        value={fullName}
-        onChangeText={setFullName}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Mot de passe"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Confirmer le mot de passe"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
-
-      <Picker
-        selectedValue={role}
-        onValueChange={(itemValue) => setRole(itemValue)}
-        style={styles.picker}
+    <LinearGradient
+      colors={['#4c669f', '#3b5998', '#192f6a']}
+      style={styles.gradient}
+    >
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
       >
-        <Picker.Item label="Utilisateur" value="user" />
-        <Picker.Item label="Club" value="club" />
-      </Picker>
+        <View style={styles.formContainer}>
+          <Text style={styles.title}>Inscription</Text>
+          
+          {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>S'inscrire</Text>
-      </TouchableOpacity>
-    </View>
+          <Input
+            style={styles.input}
+            placeholder="Nom complet"
+            value={fullName}
+            onChangeText={setFullName}
+            placeholderTextColor="rgba(255, 255, 255, 0.7)"
+          />
+
+          <Input
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            placeholderTextColor="rgba(255, 255, 255, 0.7)"
+          />
+
+          <Input
+            style={styles.input}
+            placeholder="Mot de passe"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholderTextColor="rgba(255, 255, 255, 0.7)"
+          />
+
+          <Input
+            style={styles.input}
+            placeholder="Confirmer le mot de passe"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            placeholderTextColor="rgba(255, 255, 255, 0.7)"
+          />
+
+          <View style={styles.pickerContainer}>
+            <Text style={styles.pickerLabel}>Type de compte</Text>
+            <Picker
+              selectedValue={role}
+              onValueChange={(itemValue) => setRole(itemValue)}
+              style={styles.picker}
+              dropdownIconColor="white"
+            >
+              <Picker.Item 
+                label="Utilisateur" 
+                value="user" 
+                color={Platform.OS === 'ios' ? 'white' : '#000'}
+              />
+              <Picker.Item 
+                label="Club" 
+                value="club" 
+                color={Platform.OS === 'ios' ? 'white' : '#000'}
+              />
+            </Picker>
+          </View>
+
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleRegister}
+          >
+            <Text style={styles.buttonText}>S'inscrire</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    padding: 20,
     justifyContent: 'center',
+    padding: 20,
+  },
+  formContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 20,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 20,
+    color: 'white',
+    marginBottom: 30,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 3,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    color: 'white',
+    marginBottom: 15,
+    height: 50,
+  },
+  pickerContainer: {
     marginBottom: 15,
   },
+  pickerLabel: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 16,
+    marginBottom: 5,
+  },
   picker: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    color: 'white',
+    borderRadius: 10,
     marginBottom: 15,
   },
   button: {
     backgroundColor: '#34C759',
     padding: 15,
     borderRadius: 10,
+    alignItems: 'center',
     marginTop: 10,
   },
   buttonText: {
     color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+  },
+  error: {
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginBottom: 15,
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    padding: 10,
+    borderRadius: 5,
   },
 });

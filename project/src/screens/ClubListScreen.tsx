@@ -1,120 +1,93 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
-import { Button } from 'react-native-elements'; // Si vous utilisez un package pour des boutons stylisés
-import { collection, query, getDocs } from 'firebase/firestore';
-import { db } from '../config/firebase';
-import { Club } from '../types';
-import { auth } from '../config/firebase'; // Importation pour Firebase Auth
-import { useNavigation } from '@react-navigation/native'; // Navigation
+/**
+ * Écran principal listant tous les clubs disponibles
+ * Permet de rejoindre, quitter ou gérer les clubs selon les droits de l'utilisateur
+ */
+
+import React from 'react';
+import { View, FlatList, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { ClubCard } from '../components/club/ClubCard';
+import { ClubHeader } from '../components/club/ClubHeader';
+import { useClubs } from '../hooks/useClubs';
+import { useUserRole } from '../hooks/useUserRole';
+import { useClubMembership } from '../hooks/useClubMembership';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { ErrorMessage } from '../components/ErrorMessage';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export const ClubListScreen = () => {
-  const [clubs, setClubs] = useState<Club[]>([]);
   const navigation = useNavigation();
+  // Récupération des données et des hooks nécessaires
+  const clubs = useClubs();
+  const userRole = useUserRole();
+  const { joinClub, leaveClub, loading, error } = useClubMembership();
 
-  useEffect(() => {
-    const fetchClubs = async () => {
-      const clubsQuery = query(collection(db, 'clubs'));
-      const snapshot = await getDocs(clubsQuery);
-      const clubsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Club));
-      setClubs(clubsList);
-    };
-
-    fetchClubs();
-  }, []);
-
-  const handleJoinClub = (clubId: string) => {
-    // Logique pour rejoindre un club
-    console.log(`Rejoindre le club avec l'ID : ${clubId}`);
+  // Gestionnaires d'événements pour les actions sur les clubs
+  const handleManageClub = (clubId: string) => {
+    navigation.navigate('ClubManager', { clubId });
   };
 
-  const renderClub = ({ item }: { item: Club }) => (
-    <View style={styles.card}>
-      {item.imageUrl && (
-        <Image source={{ uri: item.imageUrl }} style={styles.clubImage} />
-      )}
-      <View style={styles.cardContent}>
-        <Text style={styles.clubName}>{item.name}</Text>
-        <Text style={styles.clubDescription}>{item.description}</Text>
-        {item.ownerId === auth.currentUser?.uid ? (
-          <Button
-            title="Gérer le club"
-            onPress={() => navigation.navigate('ClubManager', { clubId: item.id })}
-            buttonStyle={styles.manageButton}
-          />
-        ) : (
-          <Button
-            title="Rejoindre"
-            onPress={() => handleJoinClub(item.id)}
-            buttonStyle={styles.joinButton}
-          />
-        )}
-      </View>
-    </View>
-  );
+  const handleJoinClub = async (clubId: string) => {
+    await joinClub(clubId);
+  };
+
+  const handleLeaveClub = async (clubId: string) => {
+    await leaveClub(clubId);
+  };
+
+  const handleChat = (clubId: string) => {
+    navigation.navigate('Chat', { clubId });
+  };
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage message={error} />;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Clubs disponibles</Text>
-      <FlatList
-        data={clubs}
-        renderItem={renderClub}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.list}
-      />
-    </View>
+    <LinearGradient
+      colors={['#4c669f', '#3b5998', '#192f6a']}
+      style={styles.gradient}
+    >
+      <View style={styles.container}>
+          {/* En-tête avec boutons d'action */}
+        <ClubHeader
+          showCreateButton={userRole === 'club'}
+          onCreatePress={() => navigation.navigate('CreateClub')}
+          onProfilePress={() => navigation.navigate('Profile')}
+          onDashboardPress={() => navigation.navigate('Dashboard')}
+        />
+
+             {/* Liste des clubs */}
+        <FlatList
+          data={clubs}
+          renderItem={({ item }) => (
+            <ClubCard
+              club={item}
+              onManage={handleManageClub}
+              onJoin={handleJoinClub}
+              onLeave={handleLeaveClub}
+              onChat={handleChat}
+            />
+          )}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    paddingTop: 100,
   },
   list: {
     gap: 20,
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  clubImage: {
-    width: '100%',
-    height: 200,
-  },
-  cardContent: {
-    padding: 15,
-  },
-  clubName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  clubDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 10,
-  },
-  joinButton: {
-    backgroundColor: '#007AFF',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  manageButton: {
-    backgroundColor: '#FF9500',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
+    paddingBottom: 20,
   },
 });

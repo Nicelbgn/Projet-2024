@@ -1,3 +1,10 @@
+/**
+ * Utilitaires pour le formatage des dates
+ */
+
+/**
+ * Formate une date en format français complet
+ */
 export const formatDate = (date: Date): string => {
   return new Intl.DateTimeFormat('fr-FR', {
     year: 'numeric',
@@ -8,6 +15,9 @@ export const formatDate = (date: Date): string => {
   }).format(date);
 };
 
+/**
+ * Calcule et retourne le temps relatif (ex: "2h", "3j")
+ */
 export const getRelativeTime = (date: Date): string => {
   const now = new Date();
   const diff = now.getTime() - date.getTime();

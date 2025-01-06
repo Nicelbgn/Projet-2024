@@ -1,132 +1,56 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity } from 'react-native';
-import { collection, query, orderBy, addDoc, onSnapshot } from 'firebase/firestore';
-import { db, auth } from '../config/firebase';
-import { Message } from '../types';
+/**
+ * Écran de chat pour un club spécifique
+ * Affiche les messages en temps réel et permet d'en envoyer de nouveaux
+ */
 
-export const ChatScreen = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { useChat } from '../hooks/useChat';
+import { ChatMessage } from '../components/chat/ChatMessage';
+import { ChatInput } from '../components/chat/ChatInput';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { ErrorMessage } from '../components/ErrorMessage';
+import { FlatList } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
-  useEffect(() => {
-    const messagesQuery = query(
-      collection(db, 'messages'),
-      orderBy('createdAt', 'desc')
-    );
+export const ChatScreen = ({ route }) => {
+   // Récupération de l'ID du club depuis les paramètres de navigation
+  const { clubId } = route.params;
+    // Utilisation du hook personnalisé pour gérer le chat
+  const { messages, loading, error, sendMessage } = useChat(clubId);
 
-    const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
-      const messagesList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Message));
-      setMessages(messagesList);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !auth.currentUser) return;
-
-    try {
-      await addDoc(collection(db, 'messages'), {
-        text: newMessage,
-        userId: auth.currentUser.uid,
-        userName: auth.currentUser.displayName || 'Anonyme',
-        createdAt: new Date(),
-      });
-      setNewMessage('');
-    } catch (error) {
-      console.error('Erreur lors de l\'envoi du message:', error);
-    }
-  };
-
-  const renderMessage = ({ item }: { item: Message }) => (
-    <View style={[
-      styles.messageContainer,
-      item.userId === auth.currentUser?.uid ? styles.ownMessage : styles.otherMessage
-    ]}>
-      <Text style={styles.userName}>{item.userName}</Text>
-      <Text style={styles.messageText}>{item.text}</Text>
-    </View>
-  );
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage message={error} />;
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={item => item.id}
-        inverted
-      />
-      
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={newMessage}
-          onChangeText={setNewMessage}
-          placeholder="Écrivez votre message..."
-          multiline
+    <LinearGradient
+      colors={['#4c669f', '#3b5998', '#192f6a']}
+      style={styles.gradient}
+    >
+      <View style={styles.container}>
+         {/* Liste des messages inversée (plus récents en haut) */}
+        <FlatList
+          data={messages}
+          renderItem={({ item }) => <ChatMessage message={item} />}
+          keyExtractor={item => item.id}
+          inverted
+          contentContainerStyle={styles.messageList}
         />
-        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-          <Text style={styles.sendButtonText}>Envoyer</Text>
-        </TouchableOpacity>
+          {/* Zone de saisie des messages */}
+        <ChatInput onSend={sendMessage} />
       </View>
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
-  messageContainer: {
-    padding: 10,
-    marginVertical: 5,
-    marginHorizontal: 10,
-    borderRadius: 10,
-    maxWidth: '80%',
-  },
-  ownMessage: {
-    backgroundColor: '#007AFF',
-    alignSelf: 'flex-end',
-  },
-  otherMessage: {
-    backgroundColor: '#E9E9EB',
-    alignSelf: 'flex-start',
-  },
-  userName: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-  },
-  messageText: {
-    fontSize: 16,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-    backgroundColor: 'white',
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    marginRight: 10,
-  },
-  sendButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    justifyContent: 'center',
-  },
-  sendButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+  messageList: {
+    padding: 15,
   },
 });

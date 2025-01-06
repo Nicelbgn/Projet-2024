@@ -1,9 +1,16 @@
+/**
+ * Écran de profil utilisateur
+ * Affiche les informations de l'utilisateur connecté
+ * Permet la déconnexion et la gestion du profil
+ */
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { auth, db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { User } from '../types';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export const ProfileScreen = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -32,61 +39,94 @@ export const ProfileScreen = () => {
   if (!user) return null;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Profil</Text>
-      
-      <View style={styles.infoContainer}>
-        <Text style={styles.label}>Nom complet:</Text>
-        <Text style={styles.value}>{user.fullName}</Text>
+    <LinearGradient
+      colors={['#4c669f', '#3b5998', '#192f6a']}
+      style={styles.gradient}
+    >
+      <View style={styles.container}>
+        <View style={styles.card}>
+          <Text style={styles.title}>Mon Profil</Text>
+          
+          <View style={styles.infoContainer}>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Nom complet</Text>
+              <Text style={styles.value}>{user.fullName}</Text>
+            </View>
 
-        <Text style={styles.label}>Email:</Text>
-        <Text style={styles.value}>{user.email}</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Email</Text>
+              <Text style={styles.value}>{user.email}</Text>
+            </View>
 
-        <Text style={styles.label}>Rôle:</Text>
-        <Text style={styles.value}>{user.role === 'club' ? 'Club' : 'Utilisateur'}</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Type de compte</Text>
+              <Text style={styles.value}>{user.role === 'club' ? 'Club' : 'Utilisateur'}</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity 
+            style={styles.logoutButton} 
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutText}>Se déconnecter</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Se déconnecter</Text>
-      </TouchableOpacity>
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 20,
+    justifyContent: 'center',
+  },
+  card: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 15,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 20,
+    color: 'white',
+    marginBottom: 30,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 3,
   },
   infoContainer: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
+    marginBottom: 30,
+  },
+  infoRow: {
     marginBottom: 20,
   },
   label: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 5,
   },
   value: {
     fontSize: 18,
-    marginBottom: 15,
+    color: 'white',
+    fontWeight: '500',
   },
   logoutButton: {
     backgroundColor: '#FF3B30',
     padding: 15,
     borderRadius: 10,
+    alignItems: 'center',
   },
-  buttonText: {
+  logoutText: {
     color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });

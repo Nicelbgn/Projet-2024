@@ -1,3 +1,8 @@
+/**
+ * Composant de saisie personnalisé
+ * Supporte les champs de texte simples et les zones de texte multiligne
+ */
+
 import React from 'react';
 import { TextInput, StyleSheet, TextInputProps } from 'react-native';
 

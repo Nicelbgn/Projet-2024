@@ -1,3 +1,8 @@
+/**
+ * Composant pour afficher un indicateur de chargement
+ * Utilisé pendant le chargement des données ou les opérations asynchrones
+ */
+
 import React from 'react';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 
